@@ -294,7 +294,9 @@ def load_data_and_labels(train_data, valid_data, user_review, item_review, user_
 if __name__ == '__main__':
     TPS_DIR = '../data/music'
     FLAGS = tf.flags.FLAGS
-    FLAGS._parse_flags()
+    #FLAGS._parse_flags()
+    import sys
+    FLAGS(sys.argv)
 
     u_text, i_text, y_train, y_valid, vocabulary_user, vocabulary_inv_user, vocabulary_item, \
     vocabulary_inv_item, uid_train, iid_train, uid_valid, iid_valid, user_num, item_num, reid_user_train, reid_item_train, reid_user_valid, reid_item_valid = \

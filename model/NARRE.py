@@ -9,8 +9,8 @@ Chong Chen (cstchenc@163.com)
 Chong Chen, Min Zhang, Yiqun Liu, and Shaoping Ma. 2018. Neural Attentional Rating Regression with Review-level Explanations. In WWW'18.
 '''
 
-
 import tensorflow as tf
+
 
 class NARRE(object):
     def __init__(
@@ -37,14 +37,12 @@ class NARRE(object):
             self.embedded_user = tf.nn.embedding_lookup(self.W1, self.input_u)
             self.embedded_users = tf.expand_dims(self.embedded_user, -1)
 
-
         with tf.name_scope("item_embedding"):
             self.W2 = tf.Variable(
                 tf.random_uniform([item_vocab_size, embedding_size], -1.0, 1.0),
                 name="W2")
             self.embedded_item = tf.nn.embedding_lookup(self.W2, self.input_i)
             self.embedded_items = tf.expand_dims(self.embedded_item, -1)
-
 
         pooled_outputs_u = []
         for i, filter_size in enumerate(filter_sizes):
@@ -72,9 +70,9 @@ class NARRE(object):
                     name="pool")
                 pooled_outputs_u.append(pooled)
         num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool_u = tf.concat(3,pooled_outputs_u)
-       # self.h_pool_u = tf.concat(pooled_outputs_u, 3)
-        
+
+        self.h_pool_u = tf.concat(pooled_outputs_u, 3)
+
         self.h_pool_flat_u = tf.reshape(self.h_pool_u, [-1, review_num_u, num_filters_total])
 
         pooled_outputs_i = []
@@ -103,9 +101,9 @@ class NARRE(object):
                     name="pool")
                 pooled_outputs_i.append(pooled)
         num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool_i = tf.concat(3, pooled_outputs_i)
+        self.h_pool_i = tf.concat(pooled_outputs_i, 3)
         self.h_pool_flat_i = tf.reshape(self.h_pool_i, [-1, review_num_i, num_filters_total])
-        
+
         with tf.name_scope("dropout"):
             self.h_drop_u = tf.nn.dropout(self.h_pool_flat_u, 1.0)
             self.h_drop_i = tf.nn.dropout(self.h_pool_flat_i, 1.0)
@@ -119,32 +117,29 @@ class NARRE(object):
             bau = tf.Variable(tf.constant(0.1, shape=[attention_size]), name="bau")
             bbu = tf.Variable(tf.constant(0.1, shape=[1]), name="bbu")
             self.iid_a = tf.nn.relu(tf.nn.embedding_lookup(iidW, self.input_reuid))
-            #self.u_j = tf.einsum('ajk,kl->ajl', tf.nn.relu(
-                #tf.einsum('ajk,kl->ajl', self.h_drop_u, Wau) + tf.einsum('ajk,kl->ajl', self.iid_a, Wru) + bau),
-                                             #Wpu)+bbu  # None*u_len*1
+            # self.u_j = tf.einsum('ajk,kl->ajl', tf.nn.relu(
+            # tf.einsum('ajk,kl->ajl', self.h_drop_u, Wau) + tf.einsum('ajk,kl->ajl', self.iid_a, Wru) + bau),
+            # Wpu)+bbu  # None*u_len*1
 
+            print(self.h_drop_u.get_shape())
+            print(Wau.get_shape())
 
-            print self.h_drop_u.get_shape()
-            print Wau.get_shape()
+            sm111 = tf.reshape(self.h_drop_u, shape=[-1, num_filters_total])
+            print(num_filters_total)
+            print(tf.shape(sm111))
+            sm11 = tf.matmul(sm111, Wau)
+            sm1 = tf.reshape(sm11, shape=[-1, review_num_u, attention_size])
+            sm2 = tf.reshape(tf.matmul(tf.reshape(self.iid_a, shape=[-1, embedding_id]), Wru),
+                             shape=[-1, review_num_u, attention_size])
+            sm3 = tf.nn.relu(sm1 + sm2 + bau)
+            print(tf.shape(sm3))
+            print(attention_size)
+            self.u_j = tf.reshape(tf.matmul(tf.reshape(sm3, shape=[-1, attention_size]), Wpu),
+                                  shape=[-1, review_num_u, 1]) + bbu
 
-            sm111=tf.reshape(self.h_drop_u, shape=[-1, num_filters_total])
-            print num_filters_total
-            print tf.shape(sm111)
-            sm11=tf.matmul(sm111, Wau)
-            sm1=tf.reshape(sm11,shape=[-1,review_num_u,attention_size])
-            sm2=tf.reshape(tf.matmul(tf.reshape(self.iid_a,shape=[-1,embedding_id]),Wru),shape=[-1,review_num_u,attention_size])
-            sm3=tf.nn.relu(sm1+sm2+bau)
-            print tf.shape(sm3)
-            print attention_size
-            self.u_j=tf.reshape(tf.matmul(tf.reshape(sm3,shape=[-1,attention_size]),Wpu),shape=[-1,review_num_u,1])+bbu
+            self.u_a = tf.nn.softmax(self.u_j, 1)  # none*u_len*1
 
-
-
-
-
-            self.u_a = tf.nn.softmax(self.u_j,1)  # none*u_len*1
-
-            print self.u_a
+            print(self.u_a)
 
             Wai = tf.Variable(
                 tf.random_uniform([num_filters_total, attention_size], -0.1, 0.1), name='Wai')
@@ -155,24 +150,22 @@ class NARRE(object):
             bai = tf.Variable(tf.constant(0.1, shape=[attention_size]), name="bai")
             bbi = tf.Variable(tf.constant(0.1, shape=[1]), name="bbi")
             self.uid_a = tf.nn.relu(tf.nn.embedding_lookup(uidW, self.input_reiid))
-            #self.i_j =tf.einsum('ajk,kl->ajl', tf.nn.relu(
-                #tf.einsum('ajk,kl->ajl', self.h_drop_i, Wai) + tf.einsum('ajk,kl->ajl', self.uid_a, Wri) + bai),
-                                             #Wpi)+bbi
+            # self.i_j =tf.einsum('ajk,kl->ajl', tf.nn.relu(
+            # tf.einsum('ajk,kl->ajl', self.h_drop_i, Wai) + tf.einsum('ajk,kl->ajl', self.uid_a, Wri) + bai),
+            # Wpi)+bbi
 
+            sm111 = tf.reshape(self.h_drop_i, shape=[-1, num_filters_total])
+            sm11 = tf.matmul(sm111, Wai)
+            sm1 = tf.reshape(sm11, shape=[-1, review_num_u, attention_size])
+            sm2 = tf.reshape(tf.matmul(tf.reshape(self.uid_a, shape=[-1, embedding_id]), Wri),
+                             shape=[-1, review_num_u, attention_size])
+            sm3 = tf.nn.relu(sm1 + sm2 + bai)
+            print(tf.shape(sm3))
+            print(attention_size)
+            self.i_j = tf.reshape(tf.matmul(tf.reshape(sm3, shape=[-1, attention_size]), Wpi),
+                                  shape=[-1, review_num_i, 1]) + bbi
 
-            sm111=tf.reshape(self.h_drop_i, shape=[-1, num_filters_total])
-            sm11=tf.matmul(sm111, Wai)
-            sm1=tf.reshape(sm11,shape=[-1,review_num_u,attention_size])
-            sm2=tf.reshape(tf.matmul(tf.reshape(self.uid_a,shape=[-1,embedding_id]),Wri),shape=[-1,review_num_u,attention_size])
-            sm3=tf.nn.relu(sm1+sm2+bai)
-            print tf.shape(sm3)
-            print attention_size
-            self.i_j=tf.reshape(tf.matmul(tf.reshape(sm3,shape=[-1,attention_size]),Wpi),shape=[-1,review_num_i,1])+bbi
-
-
-
-
-            self.i_a = tf.nn.softmax(self.i_j,1)  # none*len*1
+            self.i_a = tf.nn.softmax(self.i_j, 1)  # none*len*1
 
             l2_loss += tf.nn.l2_loss(Wau)
             l2_loss += tf.nn.l2_loss(Wru)
@@ -189,34 +182,32 @@ class NARRE(object):
             iidmf = tf.Variable(tf.random_uniform([item_num + 2, embedding_id], -0.1, 0.1), name="iidmf")
             uidmf = tf.Variable(tf.random_uniform([user_num + 2, embedding_id], -0.1, 0.1), name="uidmf")
 
-            self.uid = tf.nn.embedding_lookup(uidmf,self.input_uid)
-            self.iid = tf.nn.embedding_lookup(iidmf,self.input_iid)
-            self.uid = tf.reshape(self.uid,[-1,embedding_id])
-            self.iid = tf.reshape(self.iid,[-1,embedding_id])
+            self.uid = tf.nn.embedding_lookup(uidmf, self.input_uid)
+            self.iid = tf.nn.embedding_lookup(iidmf, self.input_iid)
+            self.uid = tf.reshape(self.uid, [-1, embedding_id])
+            self.iid = tf.reshape(self.iid, [-1, embedding_id])
             Wu = tf.Variable(
                 tf.random_uniform([num_filters_total, n_latent], -0.1, 0.1), name='Wu')
             bu = tf.Variable(tf.constant(0.1, shape=[n_latent]), name="bu")
-            self.u_feas = tf.matmul(self.u_feas, Wu)+self.uid + bu
+            self.u_feas = tf.matmul(self.u_feas, Wu) + self.uid + bu
 
             Wi = tf.Variable(
                 tf.random_uniform([num_filters_total, n_latent], -0.1, 0.1), name='Wi')
             bi = tf.Variable(tf.constant(0.1, shape=[n_latent]), name="bi")
-            self.i_feas = tf.matmul(self.i_feas, Wi) +self.iid+ bi
-
-       
+            self.i_feas = tf.matmul(self.i_feas, Wi) + self.iid + bi
 
         with tf.name_scope('ncf'):
 
             self.FM = tf.multiply(self.u_feas, self.i_feas)
             self.FM = tf.nn.relu(self.FM)
 
-            self.FM=tf.nn.dropout(self.FM,self.dropout_keep_prob)
+            self.FM = tf.nn.dropout(self.FM, self.dropout_keep_prob)
 
-            Wmul=tf.Variable(
+            Wmul = tf.Variable(
                 tf.random_uniform([n_latent, 1], -0.1, 0.1), name='wmul')
 
-            self.mul=tf.matmul(self.FM,Wmul)
-            self.score=tf.reduce_sum(self.mul,1,keep_dims=True)
+            self.mul = tf.matmul(self.FM, Wmul)
+            self.score = tf.reduce_sum(self.mul, 1, keep_dims=True)
 
             self.uidW2 = tf.Variable(tf.constant(0.1, shape=[user_num + 2]), name="uidW2")
             self.iidW2 = tf.Variable(tf.constant(0.1, shape=[item_num + 2]), name="iidW2")
@@ -235,4 +226,4 @@ class NARRE(object):
 
         with tf.name_scope("accuracy"):
             self.mae = tf.reduce_mean(tf.abs(tf.subtract(self.predictions, self.input_y)))
-            self.accuracy =tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.predictions, self.input_y))))
+            self.accuracy = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(self.predictions, self.input_y))))

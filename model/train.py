@@ -90,8 +90,12 @@ def dev_step(u_batch, i_batch, uid, iid, reuid, reiid, y_batch, writer=None):
 if __name__ == '__main__':
     FLAGS = tf.flags.FLAGS
     import sys
-    #FLAGS(sys.argv)
-    FLAGS._parse_flags()
+    FLAGS(sys.argv)
+
+
+    if sys.version_info[0] < 3:
+        FLAGS._parse_flags()
+
     print("\nParameters:")
     for attr, value in sorted(FLAGS.__flags.items()):
         print("{}={}".format(attr.upper(), value))
@@ -116,12 +120,12 @@ if __name__ == '__main__':
 
     np.random.seed(2017)
     random_seed = 2017
-    print user_num
-    print item_num
-    print review_num_u
-    print review_len_u
-    print review_num_i
-    print review_len_i
+    print(user_num)
+    print(item_num)
+    print(review_num_u)
+    print(review_len_u)
+    print(review_num_i)
+    print(review_len_i)
     with tf.Graph().as_default():
 
         session_conf = tf.ConfigProto(
@@ -149,8 +153,8 @@ if __name__ == '__main__':
                 n_latent=16)
                 #n_latent=32)
             tf.set_random_seed(random_seed)
-            print user_num
-            print item_num
+            print(user_num)
+            print(item_num)
             global_step = tf.Variable(0, name="global_step", trainable=False)
 
             optimizer = tf.train.AdagradOptimizer(learning_rate=0.01, initial_accumulator_value=1e-8).minimize(deep.loss)
@@ -173,7 +177,7 @@ if __name__ == '__main__':
                     header = f.readline()
                     vocab_size, layer1_size = map(int, header.split())
                     binary_len = np.dtype('float32').itemsize * layer1_size
-                    for line in xrange(vocab_size):
+                    for line in range(vocab_size):
                         word = []
                         while True:
                             ch = f.read(1)
@@ -200,7 +204,7 @@ if __name__ == '__main__':
                     header = f.readline()
                     vocab_size, layer1_size = map(int, header.split())
                     binary_len = np.dtype('float32').itemsize * layer1_size
-                    for line in xrange(vocab_size):
+                    for line in range(vocab_size):
                         word = []
                         while True:
                             ch = f.read(1)
@@ -218,7 +222,7 @@ if __name__ == '__main__':
                             f.read(binary_len)
 
                 sess.run(deep.W2.assign(initW))
-                print item
+                print(item)
 
             epoch = 1
             best_mae = 5
@@ -268,7 +272,7 @@ if __name__ == '__main__':
                     train_mae += t_mae
                     if batch_num % 500 == 0 and batch_num > 1:
                         print("\nEvaluation:")
-                        print batch_num
+                        print(batch_num)
 
                         loss_s = 0
                         accuracy_s = 0
@@ -294,7 +298,7 @@ if __name__ == '__main__':
                             loss_s = loss_s + len(u_valid) * loss
                             accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
                             mae_s = mae_s + len(u_valid) * mae
-                        print ("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
+                        print("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
                                                                                          np.sqrt(
                                                                                              accuracy_s / test_length),
                                                                                          mae_s / test_length))
@@ -306,14 +310,14 @@ if __name__ == '__main__':
                             best_mae = mae
                         print("")
 
-                print str(epoch) + ':\n'
+                print(str(epoch) + ':\n')
                 print("\nEvaluation:")
-                print "train:rmse,mae:", train_rmse / ll, train_mae / ll
+                print("train:rmse,mae:", train_rmse / ll, train_mae / ll)
                 u_a = np.reshape(u_a[0], (1, -1))
                 i_a = np.reshape(i_a[0], (1, -1))
 
-                print u_a
-                print i_a
+                print(u_a)
+                print(i_a)
                 train_rmse = 0
                 train_mae = 0
 
@@ -340,7 +344,7 @@ if __name__ == '__main__':
                     loss_s = loss_s + len(u_valid) * loss
                     accuracy_s = accuracy_s + len(u_valid) * np.square(accuracy)
                     mae_s = mae_s + len(u_valid) * mae
-                print ("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
+                print("loss_valid {:g}, rmse_valid {:g}, mae_valid {:g}".format(loss_s / test_length,
                                                                                  np.sqrt(accuracy_s / test_length),
                                                                                  mae_s / test_length))
                 rmse = np.sqrt(accuracy_s / test_length)
@@ -350,5 +354,5 @@ if __name__ == '__main__':
                 if best_mae > mae:
                     best_mae = mae
                 print("")
-            print 'best rmse:', best_rmse
-            print 'best mae:', best_mae
+            print('best rmse:', best_rmse)
+            print('best mae:', best_mae)

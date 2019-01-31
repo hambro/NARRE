@@ -104,6 +104,7 @@ class NARRE(object):
         self.h_pool_i = tf.concat(pooled_outputs_i, 3)
         self.h_pool_flat_i = tf.reshape(self.h_pool_i, [-1, review_num_i, num_filters_total])
 
+
         with tf.name_scope("dropout"):
             self.h_drop_u = tf.nn.dropout(self.h_pool_flat_u, 1.0)
             self.h_drop_i = tf.nn.dropout(self.h_pool_flat_i, 1.0)

@@ -7,13 +7,13 @@ import tensorflow as tf
 import pickle
 import os
 
-tf.flags.DEFINE_string("valid_data", "../data/music/music_valid.csv", " Data for validation")
-tf.flags.DEFINE_string("test_data", "../data/music/music_test.csv", "Data for testing")
-tf.flags.DEFINE_string("train_data", "../data/music/music_train.csv", "Data for training")
-tf.flags.DEFINE_string("user_review", "../data/music/user_review", "User's reviews")
-tf.flags.DEFINE_string("item_review", "../data/music/item_review", "Item's reviews")
-tf.flags.DEFINE_string("user_review_id", "../data/music/user_rid", "user_review_id")
-tf.flags.DEFINE_string("item_review_id", "../data/music/item_rid", "item_review_id")
+tf.flags.DEFINE_string("valid_data", "../data/movie/movie_valid.csv", " Data for validation")
+tf.flags.DEFINE_string("test_data", "../data/movie/movie_test.csv", "Data for testing")
+tf.flags.DEFINE_string("train_data", "../data/movie/movie_train.csv", "Data for training")
+tf.flags.DEFINE_string("user_review", "../data/movie/user_review", "User's reviews")
+tf.flags.DEFINE_string("item_review", "../data/movie/item_review", "Item's reviews")
+tf.flags.DEFINE_string("user_review_id", "../data/movie/user_rid", "user_review_id")
+tf.flags.DEFINE_string("item_review_id", "../data/movie/item_rid", "item_review_id")
 tf.flags.DEFINE_string("stopwords", "../data/stopwords", "stopwords")
 
 
@@ -296,7 +296,7 @@ def load_data_and_labels(train_data, valid_data, user_review, item_review, user_
 if __name__ == '__main__':
     import sys
 
-    TPS_DIR = '../data/music'
+    TPS_DIR = '../data/movie'
 
     #FLAGS._parse_flags()
     FLAGS = tf.flags.FLAGS
@@ -331,9 +331,9 @@ if __name__ == '__main__':
         zip(userid_train, itemid_train, reid_user_train, reid_item_train, y_train))
     batches_test = list(zip(userid_valid, itemid_valid, reid_user_valid, reid_item_valid, y_valid))
     print('write begin')
-    output = open(os.path.join(TPS_DIR, 'music.train'), 'wb')
+    output = open(os.path.join(TPS_DIR, 'movie.train'), 'wb')
     pickle.dump(batches_train, output)
-    output = open(os.path.join(TPS_DIR, 'music.test'), 'wb')
+    output = open(os.path.join(TPS_DIR, 'movie.test'), 'wb')
     pickle.dump(batches_test, output)
 
     para = {}
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     para['test_length'] = len(y_valid)
     para['u_text'] = u_text
     para['i_text'] = i_text
-    output = open(os.path.join(TPS_DIR, 'music.para'), 'wb')
+    output = open(os.path.join(TPS_DIR, 'movie.para'), 'wb')
 
     # Pickle dictionary using protocol 0.
     pickle.dump(para, output)
